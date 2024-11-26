@@ -106,6 +106,10 @@ class ASP_Process_IPN_NG {
 
 			$this->sess->set_transient_data( 'asp_data', $asp_data );
 
+			//Trigger an action hook for this error condition.
+			//The $_POST data is available in the global $_POST variable which may contain additional details.
+			do_action( 'asp_stripe_process_ipn_error', $err_msg );		
+
 			//send email to notify site admin (if option enabled)
 			$opt = get_option( 'AcceptStripePayments-settings' );
 			if ( isset( $opt['send_email_on_error'] ) && $opt['send_email_on_error'] ) {
@@ -466,6 +470,7 @@ class ASP_Process_IPN_NG {
 		$p_charge_created  = $p_data->get_charge_created();
 		$p_trans_id        = $p_data->get_trans_id();
 		$p_billing_details = $p_data->get_billing_details();
+		$p_customer_details = $p_data->get_customer_details();
 
 		if ( empty( $p_billing_details->email ) ) {
 			$email = $this->get_post_var( 'asp_email', FILTER_SANITIZE_EMAIL );
@@ -503,6 +508,12 @@ class ASP_Process_IPN_NG {
 		$data['charge_date_raw']    = $p_charge_created;
 		$data['txn_id']             = $p_trans_id;
 		$data['button_key']         = $button_key;
+
+		$customer_metadata = isset($p_customer_details->metadata) ? $p_customer_details->metadata : array();
+		if ( !empty($customer_metadata) ){
+			$data['customer_first_name'] = isset($customer_metadata['First Name']) ? sanitize_text_field($customer_metadata['First Name']) : '';
+			$data['customer_last_name'] = isset($customer_metadata['Last Name']) ? sanitize_text_field($customer_metadata['Last Name']) : '';
+		}
 
 		$item_url = $item->get_download_url();
 

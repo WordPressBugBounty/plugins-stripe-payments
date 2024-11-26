@@ -1212,6 +1212,17 @@ class AcceptStripePayments_Admin {
 			)
 		);
 		add_settings_field(
+			'use_separate_name_fields_enabled',
+			__( 'Use Separate Name Fields', 'stripe-payments' ),
+			array( &$this, 'settings_field_callback' ),
+			$this->plugin_slug . '-advanced',
+			'AcceptStripePayments-additional-settings',
+			array(
+				'field' => 'use_separate_name_fields_enabled',
+				'desc'  => __( 'When enabled, the checkout form will display separate fields for first and last names instead of a single full name field.', 'stripe-payments' ),
+			)
+		);
+		add_settings_field(
 			'pp_additional_css',
 			__( 'Payment Popup Additional CSS', 'stripe-payments' ),
 			array( &$this, 'settings_field_callback' ),
@@ -1539,6 +1550,7 @@ class AcceptStripePayments_Admin {
 			case 'enable_zip_validation':
 			case 'dont_use_cookie':                            
 			case 'dont_create_order':
+			case 'use_separate_name_fields_enabled':
 			case 'enable_email_schedule':
 			case 'frontend_prefetch_scripts':
 			case 'hide_state_field':
@@ -1831,6 +1843,8 @@ class AcceptStripePayments_Admin {
                 
 		$output['dont_create_order'] = empty( $input['dont_create_order'] ) ? 0 : 1;
 
+		$output['use_separate_name_fields_enabled'] = empty( $input['use_separate_name_fields_enabled'] ) ? 0 : 1;
+
 		$output['enable_zip_validation'] = empty( $input['enable_zip_validation'] ) ? 0 : 1;
 
 		$input['api_secret_key']           = sanitize_text_field( $input['api_secret_key'] );
@@ -2065,8 +2079,8 @@ class AcceptStripePayments_Admin {
 				'{shipping_address}'  => __( 'Shipping address of the buyer', 'stripe-payments' ),
 				'{billing_address}'   => __( 'Billing address of the buyer', 'stripe-payments' ),
 				'{customer_name}'     => __( 'Customer name. Available only if collect billing address option is enabled', 'stripe-payments' ),
-				'{first_name}'        => __( 'Customer\'s first name. Available only if collect billing address option is enabled', 'stripe-payments' ),
-				'{last_name}'         => __( 'Customer\'s last name. Available only if collect billing address option is enabled', 'stripe-payments' ),
+				'{first_name}' => __( 'Customer\'s first name. Available only if collect billing address option is enabled', 'stripe-payments' ),
+				'{last_name}' => __( 'Customer\'s last name. Available only if collect billing address option is enabled', 'stripe-payments' ),
 				'{payer_email}'       => __( 'Email Address of the buyer', 'stripe-payments' ),
 				'{currency}'          => __( 'Currency symbol. Example: $', 'stripe-payments' ),
 				'{currency_code}'     => __( '3-letter currency code. Example: USD', 'stripe-payments' ),
