@@ -7,6 +7,10 @@ class ASP_Process_IPN_NG {
 	public $asp_class;
 	public $sess;
 	public $p_data;
+
+	//Important Note: This $post_data variable need to be unset so that it does not interfere with the "isset" logic in the get_post_var function.
+	public $post_data;
+
 	protected static $instance = null;
 
 	public function __construct() {
@@ -493,7 +497,7 @@ class ASP_Process_IPN_NG {
 		$data['currency_code']      = strtoupper( $p_curr );
 		$data['item_quantity']      = $item->get_quantity();
 		$data['charge']             = $p_charge_data;
-		$data['stripeToken']        = '';
+		// $data['stripeToken']        = '';
 		$data['stripeTokenType']    = 'card';
 		$data['is_live']            = $is_live;
 		$data['charge_description'] = $item->get_description();
@@ -641,7 +645,9 @@ class ASP_Process_IPN_NG {
 			}
 			$cf_str = rtrim( $cf_str, ' | ' );
 			//trim the string as metadata value cannot exceed 500 chars
-			$cf_str                    = substr( $cf_str, 0, 499 );
+			$cf_str = substr( $cf_str, 0, 499 );
+			//add custom fields string to metadata
+			ASP_Debug_Logger::log( 'Adding custom fields string to metadata - ' . $cf_str );
 			$metadata['Custom Fields'] = $cf_str;
 		}
 
@@ -653,7 +659,7 @@ class ASP_Process_IPN_NG {
 			}
 			$var_str = rtrim( $var_str, ', ' );
 			//trim the string as metadata value cannot exceed 500 chars
-			$var_str                = substr( $var_str, 0, 499 );
+			$var_str = substr( $var_str, 0, 499 );
 			$metadata['Variations'] = $var_str;
 		}
 

@@ -3,9 +3,9 @@ Contributors: Tips and Tricks HQ, wptipsntricks, alexanderfoxc
 Donate link: https://s-plugins.com
 Tags: stripe, stripe payments, stripe gateway, payment, payments, button, shortcode, digital goods, payment gateway, commerce, digital downloads, downloads, e-commerce, e-store, ecommerce, eshop, donation
 Requires at least: 6.0
-Tested up to: 6.7
+Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 2.0.91
+Stable tag: 2.0.92
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -154,6 +154,15 @@ Yes, please visit Stripe Payments > Settings screen for options.
 None.
 
 == Changelog ==
+
+= 2.0.92 =
+- Added a CSS class to all table rows in the order summary table on the Thank You page.
+- Added a new action hook 'asp_ng_pp_output_before_closing_form' to allow adding custom HTML content before the closing form tag in the payment window.
+- Removed the unused Stripe token field from orders menu.
+- iDEAL payment addon compatibility issue fixed.
+- Klarna payment method added to the Additional Payment Methods addon.
+- Added example code to show how to collect custom data via query string in the payment popup window and send it to Stripe as metadata.
+- Added filter hooks to allow Cloudflare Turnstile integration with the plugin.
 
 = 2.0.91 =
 - Added support for the default_quantity query parameter, allowing custom quantity to be applied directly via the product link URL.
