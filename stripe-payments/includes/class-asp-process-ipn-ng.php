@@ -513,7 +513,8 @@ class ASP_Process_IPN_NG {
 		$data['txn_id']             = $p_trans_id;
 		$data['button_key']         = $button_key;
 
-		$customer_metadata = isset($p_customer_details->metadata) ? $p_customer_details->metadata : array();
+		//Type casting to an array to prevent any potential PHP warnings.
+		$customer_metadata = isset($p_customer_details->metadata) ? (array)$p_customer_details->metadata : array();
 		if ( !empty($customer_metadata) ){
 			$data['customer_first_name'] = isset($customer_metadata['First Name']) ? sanitize_text_field($customer_metadata['First Name']) : '';
 			$data['customer_last_name'] = isset($customer_metadata['Last Name']) ? sanitize_text_field($customer_metadata['Last Name']) : '';
@@ -783,6 +784,8 @@ class ASP_Process_IPN_NG {
 				$body      = nl2br( $body );
 			}
 			$headers[] = 'From: ' . $from;
+			//Trigger filter to allow modification of the buyer email headers.
+			$headers = apply_filters( 'asp_buyer_email_headers', $headers, $email_data, $data );
 
 			$schedule_result = ASP_Utils::mail( $to, $subj, $body, $headers );
 
@@ -827,7 +830,11 @@ class ASP_Process_IPN_NG {
 				$body      = nl2br( $body );
 			}
 			$headers[] = 'From: ' . $from;
+			$headers[] = 'Reply-To: ' . $data['stripeEmail'];//For admin notification emails, we set the reply-to header to the buyer's email address.
+			//Trigger filter to allow modification of the seller email headers.
+			$headers = apply_filters( 'asp_seller_email_headers', $headers, $email_data, $data );
 
+			//Send the email to the seller
 			$schedule_result = ASP_Utils::mail( $to, $subj, $body, $headers );
 			if ( ! $schedule_result ) {
 				ASP_Debug_Logger::log( 'Notification email sent to seller: ' . $to . ', from email address used: ' . $from );

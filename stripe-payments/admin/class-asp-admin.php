@@ -245,8 +245,8 @@ class AcceptStripePayments_Admin {
 			//check if required php modules are installed
 			$this->check_php_modules();
 
-                        //check if captcha is enabled
-                        $this->check_captcha_settings_and_show_msg();
+            //check if captcha is enabled
+            $this->check_captcha_settings_and_show_msg();
 		}
 
 		//Handle feedback in the admin area.
@@ -256,9 +256,14 @@ class AcceptStripePayments_Admin {
 
 	}
 
-        private function check_captcha_settings_and_show_msg() {
-                $asp_main = AcceptStripePayments::get_instance();
-                $captcha_type = $asp_main->get_setting('captcha_type');
+    private function check_captcha_settings_and_show_msg() {
+        $hide_captcha_disabled_warning = apply_filters('asp_hide_captcha_disabled_warning_notice_in_admin', false);
+        if ($hide_captcha_disabled_warning){
+            return;
+        }
+
+        $asp_main = AcceptStripePayments::get_instance();
+        $captcha_type = $asp_main->get_setting('captcha_type');
 
                 if ( empty( $captcha_type ) || $captcha_type == 'none' ) {
                         //Captcha is not enabled. Show warning message.
@@ -488,7 +493,11 @@ class AcceptStripePayments_Admin {
 		add_settings_section( 'AcceptStripePayments-captcha', __( 'Captcha Settings', 'stripe-payments' ), array( $this, 'captcha_section_description' ), $this->plugin_slug . '-captcha' );
 		add_settings_section( 'AcceptStripePayments-txn-rate-limiting', __( 'Transaction Rate Limiting', 'stripe-payments' ), array( $this, 'txn_rate_limiting_section_description' ), $this->plugin_slug . '-txn-rate-limit' );
 
-		// Global section
+		// Global settings section
+
+		//Thank You Page URL
+		$ty_description = __( 'This is the thank you page. This page is automatically created for you when you install the plugin. Do not delete this page as the plugin will send the customer to this page after the payment. If you have accidentally deleted this page, then re-create it using <a href="https://s-plugins.com/recreating-required-stripe-plugin-pages/" target="_blank">this documentation</a>.', 'stripe-payments' );
+		$ty_description .= '<br /><b>' . __( 'Important Note: ', 'stripe-payments' ) . '</b> ' . __( 'If you are using a caching solution on your site (e.g., WP Super Cache), you must exclude this page from caching. Failing to do so can result in unpredictable behavior on the Thank You page.', 'stripe-payments' );
 		add_settings_field(
 			'checkout_url',
 			__( 'Checkout Result Page URL', 'stripe-payments' ),
@@ -497,10 +506,12 @@ class AcceptStripePayments_Admin {
 			'AcceptStripePayments-global-section',
 			array(
 				'field' => 'checkout_url',
-				'desc'  => __( 'This is the thank you page. This page is automatically created for you when you install the plugin. Do not delete this page as the plugin will send the customer to this page after the payment.', 'stripe-payments' ) . '<br /><b><i>' . __( 'Important Notice:', 'stripe-payments' ) . '</i></b> ' . __( 'if you are using caching plugins on your site (similar to W3 Total Cache, WP Rocket etc), you must exclude checkout results page from caching. Failing to do so will result in unpredictable checkout results output.', 'stripe-payments' ),
+				'desc'  => $ty_description,
 				'size'  => 100,
 			)
 		);
+
+		//Products Page URL.
 		add_settings_field(
 			'products_page_id',
 			__( 'Products Page URL', 'stripe-payments' ),
@@ -514,6 +525,7 @@ class AcceptStripePayments_Admin {
 			)
 		);
 
+		//Currency Code.
 		add_settings_field(
 			'currency_code',
 			__( 'Currency', 'stripe-payments' ),
