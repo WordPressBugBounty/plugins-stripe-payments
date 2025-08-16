@@ -22,6 +22,10 @@ class ASP_Self_Hooks_Handler {
 		add_filter( 'asp_ng_pp_data_ready', array( $this, 'tax_variations_addon' ), 100, 2 );
 
 		add_action( 'asp_stripe_payment_completed', array( $this, 'daily_txn_limit' ), 102, 2 );
+
+		// TODO: There two are for addon's backward compatability, need to remove this later.
+		add_filter( 'asp_ng_pp_data_ready', array($this, 'handle_backward_compatible_pp_data_ready') , 10, 2 );
+		add_filter( 'asp_calculate_regional_shipping_amount_enabled' , array($this, 'handle_backward_compatible_calculate_regional_shipping_amount_enabled'));
 	}
 
 	public function plugins_loaded() {
@@ -51,6 +55,23 @@ class ASP_Self_Hooks_Handler {
 		$auth_only = get_post_meta( $product_id, 'asp_product_authorize_only', true );
 		if ( $auth_only ) {
 			$pi_params['capture_method'] = 'manual';
+
+			$extended_authorization   = get_post_meta( $product_id, 'asp_product_extended_authorization', true );
+			if ( ! empty( $extended_authorization ) ) {
+				if ( isset( $pi_params['payment_method_options']['card'] ) && is_array( $pi_params['payment_method_options']['card'] ) ) {
+					$pi_params['payment_method_options']['card']['request_extended_authorization'] = 'if_available';
+				} else if ( isset( $pi_params['payment_method_options'] ) && is_array( $pi_params['payment_method_options'] ) ) {
+					$pi_params['payment_method_options']['card'] = array(
+						'request_extended_authorization' => 'if_available',
+					);
+				} else {
+					$pi_params['payment_method_options'] = array(
+						'card' => array(
+							'request_extended_authorization' => 'if_available',
+						),
+					);
+				}
+			}
 		}
 		return $pi_params;
 	}
@@ -451,12 +472,23 @@ class ASP_Self_Hooks_Handler {
 			return $cust_opts;
 		}
 
-		$new_tax = ASP_Utils::get_tax_variations_tax(
-			$this->tax_variations_arr,
-			empty( $cust_opts['address']['country'] ) ? '' : $cust_opts['address']['country'],
-			empty( $cust_opts['address']['state'] ) ? '' : $cust_opts['address']['state'],
-			empty( $cust_opts['address']['city'] ) ? '' : $cust_opts['address']['city']
-		);
+		$tax_variations_type = $this->item->get_meta('asp_product_tax_variations_type');
+
+		if ($tax_variations_type == 's'){
+			$new_tax = ASP_Utils::get_tax_variations_tax(
+				$this->tax_variations_arr,
+				empty( $cust_opts['shipping']['address']['country'] ) ? '' : $cust_opts['shipping']['address']['country'],
+				empty( $cust_opts['shipping']['address']['state'] ) ? '' : $cust_opts['shipping']['address']['state'],
+				empty( $cust_opts['shipping']['address']['city'] ) ? '' : $cust_opts['shipping']['address']['city']
+			);
+		} else {
+			$new_tax = ASP_Utils::get_tax_variations_tax(
+				$this->tax_variations_arr,
+				empty( $cust_opts['address']['country'] ) ? '' : $cust_opts['address']['country'],
+				empty( $cust_opts['address']['state'] ) ? '' : $cust_opts['address']['state'],
+				empty( $cust_opts['address']['city'] ) ? '' : $cust_opts['address']['city']
+			);
+		}
 
 		if ( false !== $new_tax ) {
 			$this->item->set_tax( $new_tax );
@@ -483,12 +515,67 @@ class ASP_Self_Hooks_Handler {
 		$captcha_type = $this->main->get_setting('captcha_type');
 		$asp_daily_txn_counter_obj = new ASP_Daily_Txn_Counter();
 
-		if (empty( $captcha_type ) || $captcha_type == 'none' ) {			
+		if (empty( $captcha_type ) || $captcha_type == 'none' ) {
 			$asp_daily_txn_counter_obj->asp_increment_daily_txn_counter();
 		}
 		else if($asp_daily_txn_counter_obj->asp_is_daily_tnx_limit_with_captcha_enabled()){
 			$asp_daily_txn_counter_obj->asp_increment_daily_txn_counter();
 		}
+	}
+
+
+	public function handle_backward_compatible_pp_data_ready($data, $atts){
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		$plugins = get_plugins();
+
+		$prod_id = $atts['product_id'];
+		$plan_id = get_post_meta( $prod_id, 'asp_sub_plan_id', true );
+		if ( ! $plan_id ) {
+			return $data;
+		}
+		$sub_addon_slug = 'stripe-payments-subscriptions/asp-sub-main.php';
+		$sub_addon_required_version = '2.0.49';
+		if ( isset( $plugins[$sub_addon_slug] ) && is_plugin_active($sub_addon_slug)){
+			$sub_addon_installed_version  = class_exists('ASPSUB_main') && !empty(ASPSUB_main::ADDON_VER) ? ASPSUB_main::ADDON_VER : $plugins[$sub_addon_slug]['Version'];
+			if ( version_compare( $sub_addon_installed_version, $sub_addon_required_version, '<' ) ) {
+				$data['disable_regional_shipping_calculation'] = true;
+			}
+		}
+
+		return $data;
+	}
+
+	public function handle_backward_compatible_calculate_regional_shipping_amount_enabled($is_enabled){
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		$plugins = get_plugins();
+
+		$apm_addon_slug = 'stripe-additional-payment-methods/asp-apm-main.php';
+		$apm_addon_required_version  = '2.1.3';
+		if ( isset( $plugins[$apm_addon_slug] ) && is_plugin_active($apm_addon_slug)){
+			$apm_installed_version  = defined('WP_ASP_APM_PLUGIN_VERSION') ? WP_ASP_APM_PLUGIN_VERSION : $plugins[$apm_addon_slug]['Version'];
+
+			if ( version_compare( $apm_installed_version, $apm_addon_required_version, '<' ) && isset($_POST['ev_data']) ) {
+				ASP_Debug_Logger::log('WARNING: ASP APM addon needs to be updated!', true);
+
+				return false;
+			}
+		}
+
+		$sub_addon_slug = 'stripe-payments-subscriptions/asp-sub-main.php';
+		$sub_addon_required_version = '2.0.49';
+		if ( isset( $plugins[$sub_addon_slug] ) && is_plugin_active($sub_addon_slug)){
+			$sub_addon_installed_version  = class_exists('ASPSUB_main') && !empty(ASPSUB_main::ADDON_VER) ? ASPSUB_main::ADDON_VER : $plugins[$sub_addon_slug]['Version'];
+			if ( version_compare( $sub_addon_installed_version, $sub_addon_required_version, '<' ) && isset($_POST['asp_sub_id']) ) {
+				ASP_Debug_Logger::log('WARNING: ASP subscription addon needs to be updated!', true);
+
+				add_filter( 'asp_calculate_shipping_amount_on_ipn_process', function (){return false;});
+
+				return false;
+			}
+		}
+
+		// Default
+		return true;
 	}
 
 }

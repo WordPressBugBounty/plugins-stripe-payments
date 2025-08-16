@@ -5,7 +5,7 @@ Tags: stripe, stripe payments, stripe gateway, payment, payments, button, shortc
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 2.0.93
+Stable tag: 2.0.95
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -56,6 +56,7 @@ https://www.youtube.com/watch?v=L0n_jlEhmoA
 * Option to accept custom donation amount via Stripe payment gateway.
 * Option to collect tax for your products (if applicable).
 * Option to collect shipping for your tangible products.
+* Option to configure region based shipping additions for physical products.
 * Option to save the card data on Stripe.
 * Ability to have custom thank you page on a per product basis.
 * Ability to customize the message on the thank you page using tags.
@@ -67,7 +68,8 @@ https://www.youtube.com/watch?v=L0n_jlEhmoA
 * Option to enable Alipay payments. So your customers can pay using their Alipay accounts.
 * Option to enable Terms and Conditions that your customers have to accept before they can make a purchase.
 * Ability to configure variable products. You can charge different amount for different options of the product.
-* Ability to create "Authorize Only" products. You can hold funds on a card then capture it later.
+* Ability to create "Authorize Only" products. Authorize and place a hold on the customer's card, then capture the funds at a later time.
+* Option to enable extended authorization for Stripe payments (if supported by your Stripe account).
 * Option to display a security badge and message on the payment form.
 * 3D Secure payments compatible.
 * Strong Customer Authentication (SCA) Compliant.
@@ -155,6 +157,17 @@ None.
 
 == Changelog ==
 
+= 2.0.94 and 2.0.95 =
+- Added a new feature that allows configuration of [region based shipping additions](https://s-plugins.com/configuring-region-based-shipping-additions/).
+- Order details cost calculation layout updated.
+- New option to enable extended authorization for Stripe payment (if your Stripe account supports it).
+- The extended authorization option is added to the [authorize and capture product type] (https://s-plugins.com/authorize-only-transaction-stripe-payments/).
+- IP Address formatting issue in order details fixed.
+- Added a new option to flag a product as physical product.
+- Updated the language translation POT file.
+- Updated the version number to 2.0.95 to the main file.
+- Note: if you are using the Subscriptions or Additional Payment Methods addon, please update those addons to the latest version as well.
+
 = 2.0.93 =
 - Updated the help text of the 'Thank You' page field.
 - New filter hook 'asp_hide_captcha_disabled_warning_notice_in_admin' added to hide captcha disabled warning msg.
@@ -222,7 +235,7 @@ None.
 
 = 2.0.84 =
 - Added a new option to customize the payment button text (in the popup window) on a per product basis.
-- Added support for 'coupon_code' query param to apply coupon directly in the product link url feature. 
+- Added support for 'coupon_code' query param to apply coupon directly in the product link url feature.
 - Corrected the issue causing an error when a product is created or updated with an empty variation group.
 - Regional tax variation deletion issue fixed.
 - Added support for Custom Fields Addon's new fields position feature.

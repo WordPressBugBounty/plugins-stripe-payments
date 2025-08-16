@@ -113,6 +113,10 @@ class ASP_Payment_Data {
 		return $this->billing_details_obj;
 	}
 
+	public function set_billing_details(object $billing_addr) {
+		return $this->billing_details_obj = $billing_addr;
+	}
+
 	public function get_shipping_details() {
 		if ( ! empty( $this->shipping_details_obj ) ) {
 			return $this->shipping_details_obj;
@@ -251,7 +255,7 @@ class ASP_Payment_Data {
 
 		$b_city   = $ipn_ng_class->get_post_var( 'asp_city' );
 		$bd->city = empty( $b_city ) ? '' : sanitize_text_field( stripslashes($b_city));
-		
+
 		$b_state   = $ipn_ng_class->get_post_var( 'asp_state' );
 		$bd->state = empty( $b_state ) ? '' : sanitize_text_field( stripslashes($b_state));
 
@@ -277,7 +281,7 @@ class ASP_Payment_Data {
 
 			$s_city   = $ipn_ng_class->get_post_var( 'asp_shipping_city' );
 			$sd->city = empty( $s_city ) ? '' : sanitize_text_field( stripslashes($s_city));
-			
+
 			$s_state   = $ipn_ng_class->get_post_var( 'asp_shipping_state' );
 			$sd->state = empty( $s_state ) ? '' : sanitize_text_field( stripslashes($s_state));
 

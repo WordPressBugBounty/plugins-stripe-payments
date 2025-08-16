@@ -1,4 +1,4 @@
-/* global aspEditProdData */
+/* global jQuery, aspEditProdData, aspTaxVarData, aspShippingVarData */
 
 jQuery(document).ready(function ($) {
 	var aspVariationsGroups = aspEditProdData.varGroups;
@@ -90,11 +90,11 @@ jQuery(document).ready(function ($) {
 		if (!confirm(aspEditProdData.str.varDeleteConfirm)) {
 			return false;
 		}
-		
+
 		const variationTable = $(this).closest('table');
 
 		$(this).closest('tr').remove();
-		
+
 		// Check if it was the last variation item. If so, remove the variation group as well.
 		if (variationTable.children('tr').length < 1) {
 			variationTable.closest('.asp-variations-group-cont').remove();
@@ -241,7 +241,7 @@ jQuery(document).ready(function ($) {
 		e.preventDefault();
 		if (confirm(aspTaxVarData.str.delConfirm)) {
 			jQuery(this).closest('tr').fadeOut(300, function () { jQuery(this).remove(); });
-			
+
 			// Check if the variation table gets empty. If so, hide the table.
 			const tableBody = jQuery('#wp-asp-tax-variations-tbl tbody tr');
 			if(tableBody.length < 2){
@@ -258,4 +258,56 @@ jQuery(document).ready(function ($) {
 		jQuery(this).closest('tr').find('.wp-asp-tax-variation-cont-type-' + selBase).find('input,select').prop('disabled', false);
 	});
 
+	jQuery('#wp-asp-shipping-variations-add-btn').click(function (e) {
+		e.preventDefault();
+		var tplLine = aspShippingVarData.tplLine;
+		tplLine = tplLine.replaceAll('%1$s', aspShippingVarData.cOpts);
+		tplLine = tplLine.replaceAll('%2$s', 0);
+		tplLine = tplLine.replaceAll('%4$s', 'display:none;');
+		tplLine = tplLine.replaceAll('%5$s', 'display:none;');
+		tplLine = tplLine.replaceAll('%7$s', 'disabled');
+		tplLine = tplLine.replaceAll('%8$s', 'disabled');
+		tplLine = tplLine.replaceAll(/%[0-9]*\$s/g, '');
+		var tplLineHide = jQuery(tplLine).css('display', 'none');
+		jQuery('#wp-asp-shipping-variations-tbl').find('tbody').append(tplLineHide);
+		jQuery('#wp-asp-shipping-variations-tbl').show();
+		tplLineHide.fadeIn(200);
+	});
+
+	jQuery('#wp-asp-shipping-variations-tbl').on('click', 'button.wp-asp-shipping-variations-del-btn', function (e) {
+		e.preventDefault();
+		if (confirm(aspShippingVarData.str.delConfirm)) {
+			jQuery(this).closest('tr').fadeOut(300, function () { jQuery(this).remove(); });
+
+			// Check if the variation table gets empty. If so, hide the table.
+			const tableBody = jQuery('#wp-asp-shipping-variations-tbl tbody tr');
+			if(tableBody.length < 2){
+				jQuery('#wp-asp-shipping-variations-tbl').fadeOut(300);
+			}
+		}
+	});
+
+	jQuery('#wp-asp-shipping-variations-tbl').on('change', 'select.wp-asp-shipping-variation-base', function (e) {
+		var selBase = jQuery(this).val();
+		jQuery(this).closest('tr').find('div').hide();
+		jQuery(this).closest('tr').find('div').find('input,select').prop('disabled', true);
+		jQuery(this).closest('tr').find('.wp-asp-shipping-variation-cont-type-' + selBase).show();
+		jQuery(this).closest('tr').find('.wp-asp-shipping-variation-cont-type-' + selBase).find('input,select').prop('disabled', false);
+	});
 });
+
+document.addEventListener('DOMContentLoaded', function () {
+	const auth_only_checkbox = document.getElementById('asp_product_authorize_only_checkbox');
+	const extended_authorization_checkbox = document.getElementById('asp_product_extended_authorization_checkbox');
+	if (!auth_only_checkbox || !extended_authorization_checkbox){
+		return;
+	}
+
+	auth_only_checkbox.addEventListener('change', function () {
+		if (auth_only_checkbox.checked){
+			extended_authorization_checkbox.disabled = false;
+		} else {
+			extended_authorization_checkbox.disabled = true;
+		}
+	})
+})
