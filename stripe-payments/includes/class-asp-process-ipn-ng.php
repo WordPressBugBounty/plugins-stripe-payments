@@ -215,6 +215,12 @@ class ASP_Process_IPN_NG {
 			//ASP_Debug_Logger::log( 'Original $_POST data: ' . $post_data_str );
 		}
 
+		$nonce = $this->get_post_var( 'asp_payment_form_nonce' );
+		if (empty($nonce) || !wp_verify_nonce($nonce, 'asp_payment_form_nonce')){
+			// ASP_Debug_Logger::log( 'Nonce verification failed!', false);
+			wp_die( __('Nonce verification failed!', 'stripe-payments') );
+		}
+
 		do_action( 'asp_ng_before_payment_processing', $post_data );
 
 		$this->sess = ASP_Session::get_instance();
@@ -812,6 +818,14 @@ class ASP_Process_IPN_NG {
 			//this is zero-value transaction
 			$coupon_code = $this->get_post_var( 'asp_coupon-code' );
 			$coupon_code = sanitize_text_field( stripslashes( $coupon_code ));
+			$prod_id = $this->item->get_product_id();
+
+			// Check coupon signature data
+			if( empty(ASP_Utils_Bot_Mitigation::is_full_discount_signature_data_valid($prod_id, $coupon_code, $pi)) ){
+				// Signature is invalid.
+				wp_die(sprintf(__( "Error! Invalid transaction ID: %s", 'stripe-payments' ), $pi));
+			}
+
 			if ( empty( $coupon_code ) ) {
 				return $p_data;
 			}
@@ -828,8 +842,6 @@ class ASP_Process_IPN_NG {
 			if ( $coupon_discount_amount < $price_no_discount ) {
 				return $p_data;
 			}
-
-			$prod_id = $this->item->get_product_id();
 
 			$order = new ASP_Order_Item();
 
